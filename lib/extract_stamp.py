@@ -8,9 +8,11 @@ import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
+import matplotlib.font_manager as fm
 from scipy.spatial import cKDTree
 from astropy.io import fits
-from astropy.table import Table, vstack
+from matplotlib.colors import LogNorm
 import seaborn as sb
 
 warnings.filterwarnings("ignore")
@@ -27,8 +29,9 @@ axisY = 4094
 axisX = 2046
 
 
+
 def get_stamps_lc(field, CCD, FILTER, epoch, row_pix, col_pix,
-                  dx=100, verbose=False):
+                  dx=100, title='', verbose=False):
 
     name = '%s_%s_%s_%s_%s_%s' % (field, CCD, col_pix, row_pix, FILTER, epoch)
     print 'Saving stamps for... ', name
@@ -46,6 +49,7 @@ def get_stamps_lc(field, CCD, FILTER, epoch, row_pix, col_pix,
         return
     hdu = fits.open(imag_file)
     data = hdu[0].data
+    scale = hdu[0].header['PIXSCAL1']
 
     # # loading catalogs
     # cat_file = "%s/catalogues/%s/%s/%s_%s_%s_image_crblaster_thresh%s_minarea%s_backsize64_final-scamp.dat" % \
@@ -69,22 +73,37 @@ def get_stamps_lc(field, CCD, FILTER, epoch, row_pix, col_pix,
     #         continue
 
         # position in non projected coordinates, i.e. loaded image
+
+    if dx > row_pix or dx > col_pix:
+        dx = np.min([dx, row_pix, col_pix])
+    if dx > axisY - row_pix or dx > axisX - col_pix:
+        dx = np.min([dx, axisY - row_pix, axisX - col_pix])
+
     stamp = data[row_pix - dx: row_pix + dx,
                  col_pix - dx: col_pix + dx]
-
-    plt.figure(figsize=(10,10))
-    plt.imshow(stamp, interpolation="nearest", cmap='gray', origin='lower')
-    plt.title(name)
-    plt.axes.get_xaxis().set_visible(False)
-    plt.axes.get_yaxis().set_visible(False)
-    plt.savefig('%s/lightcurves/findingcharts/%s.pdf' % (jorgepath, name),
-                tight_layout=True, pad_inches=0.01,
-                bbox_inches='tight')
+    v_min = np.percentile(stamp.ravel(), 30)
+    v_max = stamp[dx, dx]
+    fontprops = fm.FontProperties(size=14, family='monospace')
+    fig, ax = plt.subplots(figsize=(10,10))
+    plt.title('%s | %s' % (title, name))
+    ax.imshow(stamp, interpolation="nearest", cmap='gray', origin='lower',
+              norm=LogNorm(vmin=v_min, vmax=v_max))
+    scalebar = AnchoredSizeBar(ax.transData, 222,
+                               r'     %.0f$^{\prime}$'% ((222.2 * scale)/60.)+
+                               '\n'+
+                               r'[%.2f$^{\prime\prime}$/pix]' % (scale),
+                               loc=8, color='white',
+                               frameon=False, sep=5,
+                               size_vertical=1, fontproperties=fontprops)
+    ax.add_artist(scalebar)
+    ax.set_xlabel('pix')
+    ax.set_ylabel('pix')
+    # plt.show()
+    plt.savefig('%s/figures/findingcharts/%s.pdf' % (jorgepath, name))
     plt.close()
 
     print 'Done!'
     return
-
 
 
 if __name__ == '__main__':
@@ -109,10 +128,13 @@ if __name__ == '__main__':
                         required=False, default='', type=str)
     parser.add_argument('-s', '--dx', help="stamp half-size",
                         required=False, default=100, type=int)
+    parser.add_argument('-t', '--title', help="figure title",
+                        required=False, default='', type=str)
     args = parser.parse_args()
     band = args.band
     epoch = args.epoch
     dx = args.dx
+    title = args.title
 
     if args.mode in 'xypix':
         field = args.field
@@ -145,13 +167,13 @@ if __name__ == '__main__':
         print field, ccd, row_pix, col_pix
 
         get_stamps_lc(field, ccd, band, epoch, row_pix, col_pix,
-                      dx=dx, verbose=True)
+                      dx=dx, title=title, verbose=True)
 
 
     if args.mode == 'list':
 
         print 'File: ', args.id
-        ID_table = pd.read_csv(args.id, compression='gzip')
+        ID_table = pd.read_csv(args.id)
         ID_table.set_index('internalID', inplace=True)
         print '# of sources: ', ID_table.shape[0]
         IDs = ID_table.index.values
@@ -161,26 +183,25 @@ if __name__ == '__main__':
                 r'(\w+\d+\w?\_\d\d?)\_(\w\d+?)\_(\d+)\_(\d+)', ids)[0]
             row_pix = int(row_pix)
             col_pix = int(col_pix)
-            print kk, field, ccd, col_pix, row_pix
-
-            if (col_pix < dx) or (row_pix < dx) or \
-               (axisX - col_pix < dx) or (axisY - row_pix < dx):
-                continue
+            title = ID_table.loc[ids, 'SDSS12']
+            print kk, field, ccd, col_pix, row_pix, title
             if ccd == 'S7':
+                fail.append(ids)
                 continue
 
             try:
-                get_stamps_lc(field, ccd, band, epoch,
-                              row_pix, col_pix, dx=dx, verbose=True)
+                get_stamps_lc(field, ccd, band, epoch, row_pix, col_pix,
+                              title=title, dx=dx, verbose=True)
             except:
                 fail.append(ids)
                 print '_____________________'
                 continue
             print '_____________________'
             # break
-        print 'Fail: ', fail
-        thefile = open('/home/jmartinez/HiTS/HiTS-Leftraru/temp/%s_fail.txt'
-                       % (field), 'w')
-        thefile.writelines( "%s\n" % item for item in fail)
-        thefile.close()
+        if len(fail) > 0:
+            print 'Fail: ', fail
+            thefile = open('/home/jmartinez/HiTS/HiTS-Leftraru/temp/%s_fail.txt'
+                           % (field), 'w')
+            thefile.writelines( "%s\n" % item for item in fail)
+            thefile.close()
         print 'Done!'
