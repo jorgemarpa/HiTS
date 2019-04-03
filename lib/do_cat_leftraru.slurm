@@ -189,73 +189,73 @@ echo "###########################################################"
 
 ##############################################################
 
-echo 'Creating index file to build LC...'
-echo '   Filter u'
-${PYTHON} create_lightcurves_leftraru.py -F $1 -C $CCD -b u
-EXIT_CODE=$?
-echo "Exit code: $EXIT_CODE"
-echo "###########################################################"
-echo '   Filter g'
-${PYTHON} create_lightcurves_leftraru.py -F $1 -C $CCD -b g
-EXIT_CODE=$?
-echo "Exit code: $EXIT_CODE"
-echo "###########################################################"
-echo '   Filter r'
-${PYTHON} create_lightcurves_leftraru.py -F $1 -C $CCD -b r
-EXIT_CODE=$?
-echo "Exit code: $EXIT_CODE"
-echo "###########################################################"
-echo '   Filter i'
-${PYTHON} create_lightcurves_leftraru.py -F $1 -C $CCD -b i
-EXIT_CODE=$?
-echo "Exit code: $EXIT_CODE"
-echo "###########################################################"
-echo "###########################################################"
-echo "###########################################################"
-
-##############################################################
-
-echo 'Creating photometric table...'
-if [[ "$1" == "Blind15A"* ]]; then
-      echo '   Filters ugri'
-      ${PYTHON} make_table_leftraru.py -F $1 -C $CCD -o 3 -b ugri
-      EXIT_CODE=$?
-      echo "Exit code: $EXIT_CODE"
-      echo "###########################################################"
-elif [[ "$1" == "Blind14A"* ]]; then
-      echo '   Filter g'
-      ${PYTHON} make_table_leftraru.py -F $1 -C $CCD -o 3 -b g
-      EXIT_CODE=$?
-      echo "Exit code: $EXIT_CODE"
-      echo "###########################################################"
-elif [[ "$1" == "Blind13A"* ]]; then
-      echo '   Filter u'
-      ${PYTHON} make_table_leftraru.py -F $1 -C $CCD -o 3 -b u
-      EXIT_CODE=$?
-      echo "Exit code: $EXIT_CODE"
-      echo "###########################################################"
-fi
-
-
-
-echo 'Saving LC to txt files and compress'
-if [[ "$1" == "Blind15A"* ]]; then
-      echo '   Filter g'
-      ${PYTHON} read_lightcurves_leftraru.py -F $1 -C $CCD -o 15 -b g -c True
-      EXIT_CODE=$?
-elif [[ "$1" == "Blind14A"* ]]; then
-      echo '   Filter g'
-      ${PYTHON} read_lightcurves_leftraru.py -F $1 -C $CCD -o 15 -b g -c True
-      EXIT_CODE=$?
-elif [[ "$1" == "Blind13A"* ]]; then
-      echo '   Filter u'
-      ${PYTHON} read_lightcurves_leftraru.py -F $1 -C $CCD -o 15 -b u -c True
-      EXIT_CODE=$?
-fi
-echo "Exit code: $EXIT_CODE"
-echo "###########################################################"
-echo "###########################################################"
-echo "###########################################################"
+# echo 'Creating index file to build LC...'
+# echo '   Filter u'
+# ${PYTHON} create_lightcurves_leftraru.py -F $1 -C $CCD -b u
+# EXIT_CODE=$?
+# echo "Exit code: $EXIT_CODE"
+# echo "###########################################################"
+# echo '   Filter g'
+# ${PYTHON} create_lightcurves_leftraru.py -F $1 -C $CCD -b g
+# EXIT_CODE=$?
+# echo "Exit code: $EXIT_CODE"
+# echo "###########################################################"
+# echo '   Filter r'
+# ${PYTHON} create_lightcurves_leftraru.py -F $1 -C $CCD -b r
+# EXIT_CODE=$?
+# echo "Exit code: $EXIT_CODE"
+# echo "###########################################################"
+# echo '   Filter i'
+# ${PYTHON} create_lightcurves_leftraru.py -F $1 -C $CCD -b i
+# EXIT_CODE=$?
+# echo "Exit code: $EXIT_CODE"
+# echo "###########################################################"
+# echo "###########################################################"
+# echo "###########################################################"
+#
+# ##############################################################
+#
+# echo 'Creating photometric table...'
+# if [[ "$1" == "Blind15A"* ]]; then
+#       echo '   Filters ugri'
+#       ${PYTHON} make_table_leftraru.py -F $1 -C $CCD -o 3 -b ugri
+#       EXIT_CODE=$?
+#       echo "Exit code: $EXIT_CODE"
+#       echo "###########################################################"
+# elif [[ "$1" == "Blind14A"* ]]; then
+#       echo '   Filter g'
+#       ${PYTHON} make_table_leftraru.py -F $1 -C $CCD -o 3 -b g
+#       EXIT_CODE=$?
+#       echo "Exit code: $EXIT_CODE"
+#       echo "###########################################################"
+# elif [[ "$1" == "Blind13A"* ]]; then
+#       echo '   Filter u'
+#       ${PYTHON} make_table_leftraru.py -F $1 -C $CCD -o 3 -b u
+#       EXIT_CODE=$?
+#       echo "Exit code: $EXIT_CODE"
+#       echo "###########################################################"
+# fi
+#
+#
+#
+# echo 'Saving LC to txt files and compress'
+# if [[ "$1" == "Blind15A"* ]]; then
+#       echo '   Filter g'
+#       ${PYTHON} read_lightcurves_leftraru.py -F $1 -C $CCD -o 15 -b g -c True
+#       EXIT_CODE=$?
+# elif [[ "$1" == "Blind14A"* ]]; then
+#       echo '   Filter g'
+#       ${PYTHON} read_lightcurves_leftraru.py -F $1 -C $CCD -o 15 -b g -c True
+#       EXIT_CODE=$?
+# elif [[ "$1" == "Blind13A"* ]]; then
+#       echo '   Filter u'
+#       ${PYTHON} read_lightcurves_leftraru.py -F $1 -C $CCD -o 15 -b u -c True
+#       EXIT_CODE=$?
+# fi
+# echo "Exit code: $EXIT_CODE"
+# echo "###########################################################"
+# echo "###########################################################"
+# echo "###########################################################"
 
 # echo 'Calculating light-curves features'
 # if [[ "$1" == "Blind15A"* ]]; then

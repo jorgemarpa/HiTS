@@ -55,6 +55,32 @@ def concat_features(FIELDS, CCDS):
     data_frame.to_csv('%s/features/%s_prepro_features.csv' % (jorgepath, year),
                       compression='gzip')
 
+def concat_features_galaxy(FIELDS, n_ap):
+
+    frames = []
+    for field in FIELDS:
+        print 'Field: %s' % (field)
+        file_name = '%s/features/%s/%s_all_galaxy_psf_app%i.csv' % (jorgepath, field, field, n_ap)
+        print file_name
+        if not os.path.exists(file_name):
+            print '\tNo Field file...'
+            print '___________________________'
+            continue
+        aux = pd.read_csv(file_name, compression='gzip')
+        aux.rename(columns={'Unnamed: 0': 'ID'}, inplace=True)
+        frames.append(aux)
+        # if field == 'Blind15A_04': break
+        print '___________________________'
+
+    year = FIELDS[0][:8]
+    print year
+    data_frame = pd.concat(frames, axis=0)
+    print data_frame.head()
+    print 'Total of LC: %i' % data_frame.shape[0]
+    print 'Total of Features: %i' % data_frame.shape[1]
+    data_frame.to_csv('%s/features/%s_all_galaxy_psf_app%i.csv' %
+                      (jorgepath, year, n_ap), compression='gzip')
+
 
 def concat_tables_fields(FIELDS):
 
@@ -168,7 +194,7 @@ if __name__ == '__main__':
         sys.exit()
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'T:F:y:')
+        optlist, args = getopt.getopt(sys.argv[1:], 'T:F:y:s:a:')
     except getopt.GetoptError as err:
         print help
         sys.exit()
@@ -183,6 +209,10 @@ if __name__ == '__main__':
                 all_fields = str(a)
         elif o in ('-y'):
             year = str(a)
+        elif o in ('-s'):
+            source = str(a)
+        elif o in ('-a'):
+            n_ap = int(a)
         else:
             continue
 
@@ -196,7 +226,11 @@ if __name__ == '__main__':
 
     print FIELDS
 
-    if data_table == 'feat':
+    if data_table == 'feat' and source == 'galaxy':
+        print 'Concatening galaxy feature tables..'
+        concat_features_galaxy(FIELDS, n_ap)
+
+    elif data_table == 'feat':
         print 'Concatening features files...'
         concat_features(FIELDS, CCDS)
 

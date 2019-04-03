@@ -31,9 +31,10 @@ axisX = 2046
 
 
 def get_stamps_lc(field, CCD, FILTER, epoch, row_pix, col_pix,
-                  dx=100, title='', verbose=False):
+                  dx=100, title='', verbose=False, apperture=False):
 
     name = '%s_%s_%s_%s_%s_%s' % (field, CCD, col_pix, row_pix, FILTER, epoch)
+    name1 = '%s_%s_%s_%s_%s' % (field, CCD, col_pix, row_pix, FILTER)
     print 'Saving stamps for... ', name
 
         # fits
@@ -51,28 +52,31 @@ def get_stamps_lc(field, CCD, FILTER, epoch, row_pix, col_pix,
     data = hdu[0].data
     scale = hdu[0].header['PIXSCAL1']
 
-    # # loading catalogs
-    # cat_file = "%s/catalogues/%s/%s/%s_%s_%s_image_crblaster_thresh%s_minarea%s_backsize64_final-scamp.dat" % \
-    #     (jorgepath, field, CCD, field, CCD,
-    #      epoch[0], str(thresh), str(minarea))
-    # if not os.path.exists(cat_file):
-    #     if verbose:
-    #         print '\t\tNo catalog file for worst epoch: %s' % (cat_file)
-    #     continue
-    # cata = Table.read(cat_file, format='ascii')
-    # cata_XY = np.transpose(np.array((cata['X_IMAGE_REF'],
-    #                                  cata['Y_IMAGE_REF'])))
-    # tree_XY = cKDTree(cata_XY)
-    #
-    # # quering asked position
-    # XY_obj = np.transpose(np.array((col_pix, row_pix)))
-    # dist, indx = tree_XY.query(XY_obj, k=1, distance_upper_bound=5)
-    # if np.isinf(dist):
-    #     if verbose:
-    #         print '\t\tNo match in epoch %s' % epoch[0]
-    #         continue
+    # loading catalogs
+    if epoch != '02':
+        cat_file = "%s/catalogues/%s/%s/%s_%s_%s_image_crblaster_thresh%s_minarea%s_backsize64_final-scamp.dat" % \
+            (jorgepath, field, CCD, field, CCD,
+             epoch[0], str(thresh), str(minarea))
+        if not os.path.exists(cat_file):
+            if verbose:
+                print '\t\tNo catalog file for worst epoch: %s' % (cat_file)
+            continue
+        cata = Table.read(cat_file, format='ascii')
+        cata_XY = np.transpose(np.array((cata['X_IMAGE_REF'],
+                                         cata['Y_IMAGE_REF'])))
+        tree_XY = cKDTree(cata_XY)
 
-        # position in non projected coordinates, i.e. loaded image
+        # quering asked position
+        XY_obj = np.transpose(np.array((col_pix, row_pix)))
+        dist, indx = tree_XY.query(XY_obj, k=1, distance_upper_bound=5)
+        if np.isinf(dist):
+            if verbose:
+                print '\t\tNo match in epoch %s' % epoch[0]
+                continue
+        row_pix = int(np.around(cata['Y_IMAGE'][indx]))
+        col_pix = int(np.around(cata['X_IMAGE'][indx]))
+        print 'new coordinate: ', col_pix, row_pix
+
 
     if dx > row_pix or dx > col_pix:
         dx = np.min([dx, row_pix, col_pix])
@@ -84,6 +88,7 @@ def get_stamps_lc(field, CCD, FILTER, epoch, row_pix, col_pix,
     v_min = np.percentile(stamp.ravel(), 30)
     v_max = stamp[dx, dx]
     fontprops = fm.FontProperties(size=14, family='monospace')
+
     fig, ax = plt.subplots(figsize=(10,10))
     plt.title('%s | %s' % (title, name))
     ax.imshow(stamp, interpolation="nearest", cmap='gray', origin='lower',
@@ -96,6 +101,13 @@ def get_stamps_lc(field, CCD, FILTER, epoch, row_pix, col_pix,
                                frameon=False, sep=5,
                                size_vertical=1, fontproperties=fontprops)
     ax.add_artist(scalebar)
+    if apperture:
+        lc_path = '%s/lightcurves/galaxy/%s/%s_psf_ff.csv' % (jorgepath, field, name)
+        seeing = np.array(open(fil, "r").readlines()[2].split()[4], dtype=float)
+        radii = np.array([0.5, 0.75, 1., 1.25, 1.5]) * seeing
+        circle = plt.Circle([stam.shape[0]/2., stam.shape[1]/2.],
+                            radii[3], color='r', fill=False)
+        ax.add_artist(circle)
     ax.set_xlabel('pix')
     ax.set_ylabel('pix')
     # plt.show()

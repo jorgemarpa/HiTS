@@ -21,6 +21,8 @@ from photutils import (Background2D, MedianBackground, find_peaks,
 from photutils.utils import filter_data, calc_total_error
 from photutils import aperture_photometry, CircularAperture
 from kernel import kernel
+import matplotlib.font_manager as fm
+from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 
 plt.switch_backend('agg')
 
@@ -37,7 +39,7 @@ rad2deg = 57.2957795
 axisY = 4094
 axisX = 2046
 dx = 75
-dx_stamp = 25
+dx_stamp = 75
 
 # match files: aflux | e_aflux | rms | order | sol_astrometry
 # matchRADEC: afluxADUB | e_afluxADUB | rmsdeg | CRVAL1 | CRVAL2 | CRPIX1 |
@@ -642,7 +644,7 @@ def run_lc_psf(field, CCD, FILTER, row_pix, col_pix, seeing_limit=1.8,
             continue
 
         stamps_lc.append([stamp, convolved_stamp, matched_kernel,
-                          float(epoch[1]), convolved_psf])
+                          float(epoch[1]), convolved_psf, epoch[0]])
         data_point['mjd'] = float(epoch[1])
         data_point['epoch'] = epoch[0]
         data_point['aperture_mag_err_0_cat'] = err_mag
@@ -660,7 +662,7 @@ def run_lc_psf(field, CCD, FILTER, row_pix, col_pix, seeing_limit=1.8,
                         (jorgepath, field, CCD, 'AUTO', field, CCD, epoch[0]))
         ZP.append([ZP_PS[0][0], ZP_PS[2][0]])
 
-        if True:
+        if False:
 
             fig, ax = plt.subplots(nrows=2, ncols=4, figsize=(18, 10))
 
@@ -752,6 +754,7 @@ def run_lc_psf(field, CCD, FILTER, row_pix, col_pix, seeing_limit=1.8,
         print "Creating field folder"
         os.makedirs('%s/lightcurves/galaxy/%s' % (jorgepath, field))
 
+    ## save lc file
     if True:
         print 'saving table...'
         f = open('%s/lightcurves/galaxy/%s/%s_psf_ff.csv' %
@@ -767,6 +770,7 @@ def run_lc_psf(field, CCD, FILTER, row_pix, col_pix, seeing_limit=1.8,
     #              'aperture_mag_0', 'aperture_mag_err_0',
     #              'aperture_mag_0_cat']]
 
+    ## save stam sequences
     if True:
         print 'saving figure...'
         brightest_idx = np.argmax(lc_df.aperture_flx_0)
@@ -810,6 +814,30 @@ def run_lc_psf(field, CCD, FILTER, row_pix, col_pix, seeing_limit=1.8,
         # plt.show()
         plt.close(fig)
 
+    ## save convolved stamp only per epoch
+    if True:
+        for i in range(len(stamps_lc)):
+            fig, ax = plt.subplots(1, 1, figsize=(9,9))
+            fontprops = fm.FontProperties(size=14, family='monospace')
+            ax.imshow(stamps_lc[i][1], interpolation='nearest', cmap='gray', origin='lower')
+            circle = plt.Circle([lc_df['xcenter'][i],
+                                 lc_df['ycenter'][i]],
+                                ap_radii[2], color='r', lw=.5, fill=False)
+            ax.add_artist(circle)
+            scalebar = AnchoredSizeBar(ax.transData, 37,
+                                       r'%.0f$^{\prime\prime}$'% (37 * 0.27),
+                                       loc=8, color='white',
+                                       frameon=False, sep=5,
+                                       size_vertical=0, fontproperties=fontprops)
+            ax.add_artist(scalebar)
+            ax.axes.get_xaxis().set_visible(False)
+            ax.axes.get_yaxis().set_visible(False)
+            plt.savefig('%s/lightcurves/galaxy/stamps/%s_conv_%s.pdf' %
+                        (jorgepath, name, stamps_lc[i][5]), format='pdf',
+                        tight_layout=True, pad_inches=0.01, facecolor='white',
+                        bbox_inches='tight')
+
+    ## plot time series
     if False:
         plt.plot(lc_df['mjd'],
                  lc_df['aperture_mag_0'],

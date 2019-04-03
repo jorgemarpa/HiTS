@@ -541,13 +541,14 @@ if __name__ == '__main__':
     color_bool = True
     band = 'g'
     file_path = ''
+    n_app = 1
 
     if len(sys.argv) == 1:
         print help
         sys.exit()
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'F:C:b:o:')
+        optlist, args = getopt.getopt(sys.argv[1:], 'F:C:b:o:a:')
     except getopt.GetoptError as err:
         print help
         sys.exit()
@@ -563,6 +564,8 @@ if __name__ == '__main__':
             band = str(a)
         elif o in ('-f'):
             file_path = str(a)
+        elif o in ('-a'):
+            n_app = int(a)
         else:
             continue
 
@@ -589,8 +592,8 @@ if __name__ == '__main__':
             color_bool = False
             lcs_id, lcs_g = read_lc_field(field, band=band)
             mjd_key = 'mjd'
-            mag_key = 'aperture_mag_1'
-            emag_key = 'aperture_mag_err_1'
+            mag_key = 'aperture_mag_%i' % (n_app)
+            emag_key = 'aperture_mag_err_%i' % (n_app)
 
         else:
             lcs_id, lcs_g = read_lc(field, CCD, occ=occ, band=band)
@@ -607,7 +610,7 @@ if __name__ == '__main__':
     print 'Number of LC for %s: %i' % (band, len(lcs_g))
 
     # Calculate features for all LC using FATS
-    print 'Calculating features from LCs...'
+    print 'Calculating features from LCs using app: %s...' % (mag_key)
     print ''
     startTime = datetime.now()
     count = 1
@@ -650,6 +653,7 @@ if __name__ == '__main__':
                                                       emag_key=emag_key)
             featur['ExcessVariance'] = f_var
             featur['ExcessVariance_e'] = f_var_err
+            featur['ExcessVariance_cor'] = f_var - f_var_err
             featur['StdToErr'] = StdErr
 
             r_max = ratio_max_min_flux(lc_g, mjd_key=mjd_key,
@@ -691,8 +695,8 @@ if __name__ == '__main__':
         print "Creating field folder"
         os.makedirs('%s/features/%s' % (jorgepath, field))
     if CCD == 'all':
-        fats_feat.to_csv('%s/features/%s/%s_%s_galaxy_psf.csv' %
-                         (jorgepath, field, field, CCD), compression='gzip')
+        fats_feat.to_csv('%s/features/%s/%s_%s_galaxy_psf_app%i.csv' %
+                         (jorgepath, field, field, CCD, n_app), compression='gzip')
     else:
         fats_feat.to_csv('%s/features/%s/%s_%s_prepro.csv' %
                          (jorgepath, field, field, CCD), compression='gzip')

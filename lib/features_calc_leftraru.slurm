@@ -15,7 +15,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH -c 1
 #SBATCH --mem-per-cpu=7000
-#SBATCH --array=1-28
+#SBATCH --array=1-58
 ##SBATCH --mail-user=user@gmail.com
 ##SBATCH --mail-type=ALL
 
@@ -53,7 +53,7 @@ export PYTHONPATH=`pwd`/test_omp:$PYTHONPATH
 
 echo "$SLURM_ARRAY_TASK_ID"
 
-FILELIST="/home/jmartinez/HiTS/info/galaxy_field_14A.txt"
+FILELIST="/home/jmartinez/HiTS/info/galaxy_field_14A_15A.txt"
 echo "$FILELIST"
 field=`head -n $SLURM_ARRAY_TASK_ID $FILELIST | tail -n 1`
 echo "$field"
@@ -63,8 +63,8 @@ echo "$field"
 # CCD=`head -n $SLURM_ARRAY_TASK_ID $CHIPS | tail -n 1 | cut -f 1 -d" "`
 # echo "$CCD"
 
-echo ${PYTHON} features_calc_leftraru.py -F $field -C all -b g -o 10
-${PYTHON} features_calc_leftraru.py -F $field -C all -b g -o 10
+echo ${PYTHON} features_calc_leftraru.py -F $field -C all -b g -o 10 -a $1
+${PYTHON} features_calc_leftraru.py -F $field -C all -b g -o 10 -a $1
 EXIT_CODE=$?
 
 ## finishing tasks
